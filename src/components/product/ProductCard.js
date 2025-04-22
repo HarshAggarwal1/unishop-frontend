@@ -11,13 +11,32 @@ import {
 } from "@mui/material";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { addToCart } from "../../app/slices/cart/cartSlice";
+import { toast } from "react-toastify";
 
 const ProductCard = (props) => {
     const theme = useSelector((state) => state.theme.theme);
     const [productOnFocus, setProductOnFocus] = useState(false);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    const handleAddToCart = (item) => {
+        dispatch(
+            addToCart({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                imageUri: item.imageUri,
+                category: item.category,
+                quantity: 1,
+            })
+        );
+        toast.success(`${item.title} added to cart`);
+    };
+
+
     return (
         <Card
             sx={{
@@ -40,6 +59,7 @@ const ProductCard = (props) => {
                     event.preventDefault();
                     navigate(`/product/${props.id}`, {
                         state: {
+                            id: props.id,
                             title: props.title,
                             price: props.price,
                             imageUri: props.imageUri,
@@ -58,7 +78,13 @@ const ProductCard = (props) => {
                     onClick={(event) => {
                         event.stopPropagation();
                         event.preventDefault();
-                        console.log("Add to cart clicked");
+                        handleAddToCart({
+                            id: props.id,
+                            title: props.title,
+                            price: props.price,
+                            imageUri: props.imageUri,
+                            category: props.category,
+                        });
                     }}
                     sx={{
                         display: `${productOnFocus ? "span" : "none"}`,
@@ -183,6 +209,7 @@ const ProductCard = (props) => {
 export default ProductCard;
 
 ProductCard.propTypes = {
+    id: PropTypes.number.isRequired,
     title: PropTypes.string.isRequired,
     price: PropTypes.number.isRequired,
     imageUri: PropTypes.string.isRequired,
@@ -192,6 +219,7 @@ ProductCard.propTypes = {
     loading: PropTypes.bool,
 };
 ProductCard.defaultProps = {
+    id: 0,
     title: "Smart Watch",
     price: 25499,
     imageUri: "/product-demo-image.jpg",

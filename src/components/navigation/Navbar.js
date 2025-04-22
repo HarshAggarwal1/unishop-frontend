@@ -10,7 +10,6 @@ import { Link, useNavigate } from 'react-router-dom';
 const Navbar = (props) => {
     const dispatch = useDispatch();
     const theme = useSelector((state) => state.theme.theme);
-    const cartStatus = useSelector((state) => state.cart.cartStatus);
     const cartTotalItems = useSelector((state) => state.cart.totalItems);
     const isLoggedIn = useSelector((state) => state.login.isLoggedIn);
     const navigate = useNavigate();
@@ -61,11 +60,15 @@ const Navbar = (props) => {
                         <IconButton color="inherit" onClick={() => dispatch(toggleTheme())}>
                             {theme === 'dark' ? <DarkModeOutlined /> : <LightModeOutlined />}
                         </IconButton>
-                        <IconButton color="inherit" onClick={() => dispatch(updateCartStatus(cartStatus === 'empty' ? 'filled' : 'empty'))}>
+                        <IconButton color="inherit" onClick={(event) => {
+                            event.preventDefault();
+                            navigate('/cart');
+                            // dispatch(updateCartStatus(cartStatus === 'empty' ? 'filled' : 'empty'))};
+                            }}>
                             <div className="relative inline-block leading-none">
                                 <ShoppingCartOutlined />
                                 {
-                                    cartStatus === 'filled' ? 
+                                    (cartTotalItems > 0) ? 
                                     ( <span className="absolute -top-0 -right-0 bg-red-500 text-white rounded-full px-1 text-xs">{cartTotalItems}</span> ) : 
                                     ( <span className="absolute -top-0 -right-0 bg-gray-500 text-white rounded-full px-1 text-xs invisible">0</span> )
                                 }

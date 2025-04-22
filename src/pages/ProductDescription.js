@@ -1,15 +1,19 @@
 import React, { useState } from 'react'
 import { Box, IconButton, Rating } from '@mui/material'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { ShoppingBag } from '@mui/icons-material'
 import { useLocation } from 'react-router-dom'
+import { addToCart } from '../app/slices/cart/cartSlice'
+import { toast } from 'react-toastify'
 
 export default function ProductDescription() {
     const theme = useSelector((state) => state.theme.theme);
     const [quantity, setQuantity] = useState(1);
     const location = useLocation();
+    const dispatch = useDispatch();
     const description = 'This is a product description. It is a long description that describes the product in detail. It is a long description that describes the product in detail. It is a long description that describes the product in detail. It is a long description that describes the product in detail.';
-    const { title, price, imageUri, category, rating, numRatings } = location.state || {
+    const { id, title, price, imageUri, category, rating, numRatings } = location.state || {
+        id: 0,
         title: 'Product Title',
         price: 23999,
         imageUri: '/product-demo-image.jpg',
@@ -17,7 +21,19 @@ export default function ProductDescription() {
         rating: 4.6,
         numRatings: 100,
     }
-
+    const handleAddToCart = (item) => {
+        dispatch(
+            addToCart({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                imageUri: item.imageUri,
+                category: item.category,
+                quantity: quantity,
+            })
+        );
+        toast.success(`${item.title} added to cart`);
+    };
     return (
         <div className='grid sm:grid-cols-1 md:grid-cols-2 gap-4'>
             <img src={imageUri} alt={title} className='rounded-md border border-gray-200' />
@@ -76,6 +92,17 @@ export default function ProductDescription() {
                     </div>
                 </div>
                 <IconButton
+                    onClick={(event) => {
+                        event.preventDefault();
+                        handleAddToCart({
+                            id: id,
+                            title: title,
+                            price: price,
+                            imageUri: imageUri,
+                            category: category,
+                            quantity: quantity,
+                        });
+                    }}
                     sx={{
                         backgroundColor: theme === 'dark' ? '#1e3a8a' : '#3b82f6',
                         '&:hover': {

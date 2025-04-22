@@ -9,9 +9,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useSelector } from 'react-redux';
 // import ProductCard from './components/product/ProductCard';
 import Dashboard from './pages//Dashboard';
-import ProductDescription from './components/product/ProductDescription';
+import ProductDescription from './pages/ProductDescription';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NotFound from './pages/NotFound';
+import Cart from './pages/Cart';
 
 function App() {
 	const theme = useSelector((state) => state.theme.theme);
@@ -28,13 +29,14 @@ function App() {
 						<Route path="/product/:id" element={<ProductDescription />} />
 						<Route path="/auth/login" element={theme === 'dark' ? <LoginPageDark /> : <LoginPageLight />} />
 						<Route path="/auth/register" element={theme === 'dark' ? <RegisterPageDark /> : <RegisterPageLight />} />
+						<Route path="/cart" element={<Cart />} />
 						<Route path="*" element={<NotFound />} />
 					</Routes>
 				</main>
 				<ToastContainer
 					position="bottom-left"
-					autoClose={3000}
-					hideProgressBar={false}
+					autoClose={1500}
+					hideProgressBar={true}
 					newestOnTop={false}
 					closeOnClick
 					pauseOnFocusLoss
