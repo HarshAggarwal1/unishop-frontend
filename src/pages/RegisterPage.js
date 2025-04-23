@@ -4,6 +4,8 @@ import { Tab, Box, TextField, Button } from '@mui/material';
 import { TabContext, TabPanel, TabList } from '@mui/lab';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const darkTheme = {
     "& .MuiInputLabel-root": {
@@ -27,7 +29,7 @@ const darkTheme = {
 }
 
 
-export default function RegisterPageLight() {
+export default function RegisterPage() {
     const [userType, setUserType] = useState("customer")
     const [name, setName] = useState("")
     const [phone, setPhone] = useState("")
@@ -38,8 +40,19 @@ export default function RegisterPageLight() {
     const [isLoading, setIsLoading] = useState(false)
     const [captchaVerified, setCaptchaVerified] = useState(false)
     const [gstNumber, setGstNumber] = useState("")
+    const theme = useSelector((state) => state.theme.theme);
+    const recaptchaRef = useRef(null);
+    const navigate = useNavigate();
 
-    const handleSubmit = (event) => {
+    const handleCaptchaChange = (token) => {
+        setCaptchaVerified(true);
+        toast.success("CAPTCHA verified successfully!");
+    };
+    const handleCaptchaExpired = () => {
+        setCaptchaVerified(false);
+        toast.error("CAPTCHA expired, please verify again.");
+    };
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (!captchaVerified) {
@@ -51,6 +64,49 @@ export default function RegisterPageLight() {
             return;
         }
         setIsLoading(true);
+
+        if (password !== confirmPassword) {
+            toast.error("Passwords do not match");
+            setIsLoading(false);
+            return;
+        }
+
+        const response = await fetch('http://localhost:8080/api/auth/register', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "name": name,
+                "phone": phone,
+                "username": email,
+                "password": password,
+                "address": address,
+            }),
+        });
+
+        const data = await response.json();
+
+        setIsLoading(false);
+        setName("");
+        setPhone("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setAddress("");
+        if (recaptchaRef.current) {
+            recaptchaRef.current.reset();
+        }
+        setCaptchaVerified(false);
+
+        if (response.status === 201) {
+            toast.success("Registration successful!");
+            navigate("/auth/login");
+        }
+        else {
+            toast.error(data.message || "Registeration failed. Please try again.");
+        }
     }
 
     return (
@@ -62,7 +118,7 @@ export default function RegisterPageLight() {
                 </div>
 
                 <TabContext value={userType}>
-                    <Box sx={{ border: 1, borderColor: '#757575', backgroundColor: '#757575', padding: 0.5, borderRadius: 1 }}>
+                    <Box sx={{ border: 1, borderColor: `${theme === 'dark' ? '#757575' : 'divider'}`, backgroundColor: `${theme === 'dark' ? '#757575' : 'divider'}`, padding: 0.5, borderRadius: 1 }}>
                         <TabList
                             onChange={(e, newValue) => setUserType(newValue)}
                             aria-label="auth tabs"
@@ -95,6 +151,7 @@ export default function RegisterPageLight() {
                             <Tab
                                 label="Seller"
                                 value="seller"
+                                disabled={true}
                                 sx={{
                                     padding: 0,
                                     minHeight: '2rem',
@@ -117,8 +174,6 @@ export default function RegisterPageLight() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
-                            captchaVerified={captchaVerified}
-                            setCaptchaVerified={setCaptchaVerified}
                             isLoading={isLoading}
                             handleSubmit={handleSubmit}
                             name={name}
@@ -129,6 +184,10 @@ export default function RegisterPageLight() {
                             setAddress={setAddress}
                             confirmPassword={confirmPassword}
                             setConfirmPassword={setConfirmPassword}
+                            recaptchaRef={recaptchaRef}
+                            handleCaptchaChange={handleCaptchaChange}
+                            handleCaptchaExpired={handleCaptchaExpired}
+                            theme={theme}
                         />
                     </TabPanel>
 
@@ -139,8 +198,6 @@ export default function RegisterPageLight() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
-                            captchaVerified={captchaVerified}
-                            setCaptchaVerified={setCaptchaVerified}
                             isLoading={isLoading}
                             handleSubmit={handleSubmit}
                             name={name}
@@ -153,6 +210,10 @@ export default function RegisterPageLight() {
                             setConfirmPassword={setConfirmPassword}
                             gstNumber={gstNumber}
                             setGstNumber={setGstNumber}
+                            recaptchaRef={recaptchaRef}
+                            handleCaptchaChange={handleCaptchaChange}
+                            handleCaptchaExpired={handleCaptchaExpired}
+                            theme={theme}
                         />
                     </TabPanel>
                 </TabContext>
@@ -174,8 +235,6 @@ function RegisterFormCustomer({
     setEmail,
     password,
     setPassword,
-    captchaVerified,
-    setCaptchaVerified,
     isLoading,
     handleSubmit,
     name,
@@ -186,18 +245,13 @@ function RegisterFormCustomer({
     setAddress,
     confirmPassword,
     setConfirmPassword,
+    recaptchaRef,
+    handleCaptchaChange,
+    handleCaptchaExpired,
+    theme,
 }) {
-    const recaptchaRef = useRef(null);
-    const handleCaptchaChange = (token) => {
-        setCaptchaVerified(true);
-        console.log("CAPTCHA token:", token);
-        toast.success("CAPTCHA verified successfully!");
-    };
     const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-    const handleCaptchaExpired = () => {
-        setCaptchaVerified(false);
-        toast.error("CAPTCHA expired, please verify again.");
-    };
+
     return (
         <form onSubmit={handleSubmit}>
             <Box sx={{ my: 2 }}>
@@ -210,7 +264,7 @@ function RegisterFormCustomer({
                     type="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -229,7 +283,7 @@ function RegisterFormCustomer({
                             pattern: '[0-9]*',
                         },
                     }}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -242,7 +296,7 @@ function RegisterFormCustomer({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -256,7 +310,7 @@ function RegisterFormCustomer({
                     rows={4}
                     variant="outlined"
                     fullWidth
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
 
@@ -270,7 +324,7 @@ function RegisterFormCustomer({
                     id={`${userType}-password`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
                 <TextField
                     fullWidth
@@ -281,7 +335,7 @@ function RegisterFormCustomer({
                     id={`${userType}-confirm-password`}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
 
@@ -291,7 +345,7 @@ function RegisterFormCustomer({
                     sitekey={siteKey}
                     onChange={handleCaptchaChange}
                     onExpired={handleCaptchaExpired}
-                    theme='dark'
+                    theme={`${theme === 'dark' ? 'dark' : 'light'}`}
                 />
             </Box>
 
@@ -321,8 +375,6 @@ function RegisterFormSeller({
     setEmail,
     password,
     setPassword,
-    captchaVerified,
-    setCaptchaVerified,
     isLoading,
     handleSubmit,
     name,
@@ -335,18 +387,13 @@ function RegisterFormSeller({
     setConfirmPassword,
     gstNumber,
     setGstNumber,
+    recaptchaRef,
+    handleCaptchaChange,
+    handleCaptchaExpired,
+    theme,
+
 }) {
-    const recaptchaRef = useRef(null);
-    const handleCaptchaChange = (token) => {
-        setCaptchaVerified(true);
-        console.log("CAPTCHA token:", token);
-        toast.success("CAPTCHA verified successfully!");
-    };
     const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-    const handleCaptchaExpired = () => {
-        setCaptchaVerified(false);
-        toast.error("CAPTCHA expired, please verify again.");
-    };
     return (
         <form onSubmit={handleSubmit}>
             <Box sx={{ my: 2 }}>
@@ -359,7 +406,7 @@ function RegisterFormSeller({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -378,7 +425,7 @@ function RegisterFormSeller({
                             pattern: '[0-9]*',
                         },
                     }}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -391,7 +438,7 @@ function RegisterFormSeller({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -406,7 +453,7 @@ function RegisterFormSeller({
                     rows={4}
                     variant="outlined"
                     fullWidth
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
             <Box sx={{ my: 2 }}>
@@ -419,7 +466,7 @@ function RegisterFormSeller({
                     type="text"
                     value={gstNumber}
                     onChange={(e) => setGstNumber(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
 
@@ -433,7 +480,7 @@ function RegisterFormSeller({
                     id={`${userType}-password`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
                 <TextField
                     fullWidth
@@ -444,7 +491,7 @@ function RegisterFormSeller({
                     id={`${userType}-confirm-password`}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    sx={darkTheme}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
             </Box>
 
@@ -455,7 +502,7 @@ function RegisterFormSeller({
                     sitekey={siteKey}
                     onChange={handleCaptchaChange}
                     onExpired={handleCaptchaExpired}
-                    theme='dark'
+                    theme={`${theme === 'dark' ? 'dark' : 'light'}`}
                 />
             </Box>
 

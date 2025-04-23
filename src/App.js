@@ -1,9 +1,7 @@
 import './App.css';
 import Navbar from './components/navigation/Navbar';
-import LoginPageLight from './pages/auth/login/LoginPageLight';
-import LoginPageDark from './pages/auth/login/LoginPageDark';
-import RegisterPageLight from './pages/auth/register/RegisterPageLight';
-import RegisterPageDark from './pages/auth/register/RegisterPageDark';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSelector } from 'react-redux';
@@ -27,8 +25,8 @@ function App() {
 					<Routes>
 						<Route path="/" element={<Dashboard />} />
 						<Route path="/product/:id" element={<ProductDescription />} />
-						<Route path="/auth/login" element={theme === 'dark' ? <LoginPageDark /> : <LoginPageLight />} />
-						<Route path="/auth/register" element={theme === 'dark' ? <RegisterPageDark /> : <RegisterPageLight />} />
+						<Route path="/auth/login" element={<LoginPage />} />
+						<Route path="/auth/register" element={<RegisterPage />} />
 						<Route path="/cart" element={<Cart />} />
 						<Route path="*" element={<NotFound />} />
 					</Routes>

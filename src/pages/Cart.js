@@ -16,8 +16,6 @@ export default function Cart() {
     const dispatch = useDispatch();
 
     return (
-        // <React.Fragment>
-        // {
         cartTotalItems > 0 ? (
             <div className='h-svh w-screen p-4 flex flex-col'>
                 <h1 className='text-3xl font-bold text-start'>Your Cart</h1>
@@ -125,7 +123,5 @@ export default function Cart() {
             </div>
 
         )
-        // }
-        // </React.Fragment>
     )
 }

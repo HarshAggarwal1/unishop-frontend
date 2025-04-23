@@ -1,19 +1,54 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify';
 import { Tab, Box, TextField, Button } from '@mui/material';
 import { TabContext, TabPanel, TabList } from '@mui/lab';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
+const darkTheme = {
+    "& .MuiInputLabel-root": {
+        color: "#ffffff",
+    },
+    "& .MuiInputLabel-root.Mui-focused": {
+        color: "#ffffff",
+    },
+    "& .MuiOutlinedInput-input": {
+        color: "#d1d5db",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#d1d5db",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#ffffff",
+    },
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#ffffff",
+    },
+}
 
-export default function LoginPageLight() {
+export default function LoginPage() {
     const [userType, setUserType] = useState("customer")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [captchaVerified, setCaptchaVerified] = useState(false)
+    const theme = useSelector((state) => state.theme.theme);
+    const recaptchaRef = useRef(null);
+    const navigate = useNavigate();
 
-    const handleSubmit = (event) => {
+    const handleCaptchaChange = (token) => {
+        setCaptchaVerified(true);
+        toast.success("CAPTCHA verified successfully!");
+    };
+    const handleCaptchaExpired = () => {
+        setCaptchaVerified(false);
+        recaptchaRef.current.reset();
+        toast.error("CAPTCHA expired, please verify again.");
+    };
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (!captchaVerified) {
@@ -25,18 +60,50 @@ export default function LoginPageLight() {
             return;
         }
         setIsLoading(true);
+
+        const response = await fetch('http://localhost:8080/api/auth/login', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "username": email,
+                "password": password,
+            }),
+        });
+
+        const data = await response.json();
+
+        setIsLoading(false);
+        setEmail("");
+        setPassword("");
+        setCaptchaVerified(false);
+        if (recaptchaRef.current) {
+            recaptchaRef.current.reset();
+        }
+
+        if (response.status === 200) {
+            toast.success("Login successful!");
+            console.log(data.token);
+            navigate("/");
+        }
+        else {
+            toast.error(data.message || "Login failed. Please try again.");
+        }
+
     }
 
     return (
         <div className=" container flex items-center justify-center">
-            <div className="mx-auto w-full max-w-md space-y-6">
+            <div className="mx-auto w-full max-w-md space-y-2">
                 <div className="space-y-2 text-center">
                     <h1 className="text-3xl font-bold">Welcome back</h1>
                     <p className="text-muted-foreground">Enter your credentials to sign in to your account</p>
                 </div>
 
                 <TabContext value={userType}>
-                    <Box sx={{ border: 1, borderColor: 'divider', backgroundColor: 'divider', padding: 0.5, borderRadius: 1 }}>
+                    <Box sx={{ border: 1, borderColor: `${theme === 'dark' ? '#757575' : 'divider'}`, backgroundColor: `${theme === 'dark' ? '#757575' : 'divider'}`, padding: 0.5, borderRadius: 1 }}>
                         <TabList
                             onChange={(e, newValue) => setUserType(newValue)}
                             aria-label="auth tabs"
@@ -69,6 +136,7 @@ export default function LoginPageLight() {
                             <Tab
                                 label="Seller"
                                 value="seller"
+                                disabled={true}
                                 sx={{
                                     padding: 0,
                                     minHeight: '2rem',
@@ -91,10 +159,12 @@ export default function LoginPageLight() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
-                            captchaVerified={captchaVerified}
-                            setCaptchaVerified={setCaptchaVerified}
                             isLoading={isLoading}
                             handleSubmit={handleSubmit}
+                            theme={theme}
+                            recaptchaRef={recaptchaRef}
+                            handleCaptchaChange={handleCaptchaChange}
+                            handleCaptchaExpired={handleCaptchaExpired}
                         />
                     </TabPanel>
 
@@ -105,10 +175,12 @@ export default function LoginPageLight() {
                             setEmail={setEmail}
                             password={password}
                             setPassword={setPassword}
-                            captchaVerified={captchaVerified}
-                            setCaptchaVerified={setCaptchaVerified}
                             isLoading={isLoading}
                             handleSubmit={handleSubmit}
+                            theme={theme}
+                            recaptchaRef={recaptchaRef}
+                            handleCaptchaChange={handleCaptchaChange}
+                            handleCaptchaExpired={handleCaptchaExpired}
                         />
                     </TabPanel>
                 </TabContext>
@@ -130,19 +202,14 @@ function AuthForm({
     setEmail,
     password,
     setPassword,
-    captchaVerified,
-    setCaptchaVerified,
     isLoading,
     handleSubmit,
+    theme,
+    recaptchaRef,
+    handleCaptchaChange,
+    handleCaptchaExpired,
 }) {
-    const recaptchaRef = useRef(null);
-    const handleCaptchaChange = (token) => {
-        setCaptchaVerified(true);
-        console.log("CAPTCHA token:", token);
-        toast.success("CAPTCHA verified successfully!");
-    };
     const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-    
 
     return (
         <form onSubmit={handleSubmit}>
@@ -156,7 +223,9 @@ function AuthForm({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
+
             </Box>
 
             <Box sx={{ my: 2 }}>
@@ -169,9 +238,10 @@ function AuthForm({
                     id={`${userType}-password`}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    sx={theme === 'dark' ? darkTheme : {}}
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'end' }}>
-                    <Button variant="text" size="small">Forgot password?</Button>
+                    <Button variant="text" size="small" sx={theme === 'dark' ? { color: 'white' } : {}}>Forgot password?</Button>
                 </Box>
             </Box>
 
@@ -180,6 +250,8 @@ function AuthForm({
                     ref={recaptchaRef}
                     sitekey={siteKey}
                     onChange={handleCaptchaChange}
+                    onExpired={handleCaptchaExpired}
+                    theme={`${theme === 'dark' ? 'dark' : 'light'}`}
                 />
             </Box>
 
@@ -188,6 +260,14 @@ function AuthForm({
                 type="submit"
                 variant="contained"
                 disabled={isLoading}
+                sx={{
+                    textTransform: 'none',
+                    backgroundColor: 'primary.main',
+                    '&:hover': {
+                        backgroundColor: 'primary.dark',
+                    },
+                    padding: '0.5rem 1rem',
+                }}
             >
                 {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
