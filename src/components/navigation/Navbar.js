@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleTheme } from '../../app/slices/theme/themeSlice';
-import { updateCartStatus } from '../../app/slices/cart/cartSlice'
-// import { updateLoginStatus } from '../../app/slices/login/loginSlice';
 import { FormGroup, IconButton } from '@mui/material';
 import { AccountCircleOutlined, DarkModeOutlined, LightModeOutlined, LoginOutlined, SearchOutlined, ShoppingCartOutlined } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const Navbar = (props) => {
     const dispatch = useDispatch();
@@ -14,10 +13,6 @@ const Navbar = (props) => {
     const isLoggedIn = useSelector((state) => state.login.isLoggedIn);
     const navigate = useNavigate();
     const [searchFocus, setSearchFocus] = React.useState(false);
-
-    useEffect(() => {
-        document.body.className = theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black';
-    }, [theme]);
 
     return (
         <nav className='fixed w-screen top-0 left-0 z-50'>
@@ -57,7 +52,11 @@ const Navbar = (props) => {
                 </div>
                 <div className="flex items-center space-x-4">
                     <FormGroup sx={{ display: 'flex', flexDirection: 'row' }}>
-                        <IconButton color="inherit" onClick={() => dispatch(toggleTheme())}>
+                        <IconButton color="inherit" onClick={() => {
+                            const newTheme = theme === 'dark' ? 'light' : 'dark';
+                            dispatch(toggleTheme());
+                            Cookies.set('theme', newTheme, { expires: 30 });
+                        }}>
                             {theme === 'dark' ? <DarkModeOutlined /> : <LightModeOutlined />}
                         </IconButton>
                         <IconButton color="inherit" onClick={(event) => {
