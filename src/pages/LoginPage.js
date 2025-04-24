@@ -6,6 +6,8 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { updateLoginStatus } from '../app/slices/login/loginSlice';
 
 const darkTheme = {
     "& .MuiInputLabel-root": {
@@ -37,6 +39,7 @@ export default function LoginPage() {
     const theme = useSelector((state) => state.theme.theme);
     const recaptchaRef = useRef(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleCaptchaChange = (token) => {
         setCaptchaVerified(true);
@@ -85,6 +88,7 @@ export default function LoginPage() {
 
         if (response.status === 200) {
             toast.success("Login successful!");
+            dispatch(updateLoginStatus(true));
             console.log(data.token);
             navigate("/");
         }

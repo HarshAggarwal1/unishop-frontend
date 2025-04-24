@@ -2,10 +2,9 @@ import './App.css';
 import Navbar from './components/navigation/Navbar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSelector, useDispatch } from 'react-redux';
-// import ProductCard from './components/product/ProductCard';
 import Dashboard from './pages//Dashboard';
 import ProductDescription from './pages/ProductDescription';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -14,6 +13,7 @@ import Cart from './pages/Cart';
 import { useEffect } from 'react';
 import { setTheme } from './app/slices/theme/themeSlice';
 import { setCartData } from './app/slices/cart/cartSlice';
+import { updateLoginStatus } from './app/slices/login/loginSlice';
 import Cookies from 'js-cookie';
 
 function App() {
@@ -28,6 +28,9 @@ function App() {
 	const dispatch = useDispatch();
 
 	useEffect(() => {
+
+		
+
 		const savedTheme = Cookies.get('theme');
 		dispatch(setTheme(savedTheme || 'light'));
 
@@ -36,6 +39,31 @@ function App() {
 			const parsedCartData = JSON.parse(savedCartData);
 			dispatch(setCartData(parsedCartData));
 		}
+		
+		fetch('http://localhost:8080/api/auth/me', {
+			method: 'GET',
+			credentials: 'include',
+		})
+		.then((response) => {
+			if (response.ok) {
+				return response.json();
+			} else {
+				throw new Error('Network response was not ok');
+			}
+		})
+		.then((data) => {
+			console.log('data', data);
+			if (data) {
+				toast.success(`Welcome back ${data.name}`);
+				dispatch(updateLoginStatus(true));
+			} else {
+				dispatch(updateLoginStatus(false));
+			}
+		})
+		.catch((error) => {
+			console.error('There was a problem with the fetch operation:', error);
+		});
+
 	}, [dispatch]);
 
 	// theme 
@@ -53,7 +81,6 @@ function App() {
 				delieveryCharges: delieveryCharges,
 				discounts: discounts,
 			};
-			console.log('cartData', cartData);
 			Cookies.set('cartData', JSON.stringify(cartData), { expires: 7 });
 		}
 	}, [cartTotalItems, netPrice, cartItems, delieveryCharges, discounts]);
